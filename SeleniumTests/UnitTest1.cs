@@ -9,6 +9,7 @@ namespace SeleniumDemo
     public class SauceDemoTests
     {
         private static IWebDriver driver;
+       
 
         [SetUp]
         public static void StartBrowser()
@@ -23,20 +24,12 @@ namespace SeleniumDemo
        
 
         [Test]
-        public void InvalidLogin()
+        public void InvalidUsernameInvalidPassword()
         {
-            IWebElement usernameInput = driver.FindElement(By.Id("user-name"));
-            IWebElement passwordInput = driver.FindElement(By.Id("password"));
-            IWebElement loginButton = driver.FindElement(By.Id("login-button"));
 
-            usernameInput.SendKeys("invaliduser");
-            passwordInput.SendKeys("invalidpass");
-            loginButton.Click();
-
-            IWebElement errorMessage = WaitUntilElementIsVisible(By.CssSelector(".error-message-container.error"));
-
+            Login("invalidusername", "invalidpassword");
             
-            Assert.That(errorMessage.Text, Is.EqualTo("Epic sadface: Username and password do not match any user in this service"));
+            Assert.That(GetErrorMessage(), Is.EqualTo("Epic sadface: Username and password do not match any user in this service"));
 
             
         }
@@ -45,12 +38,9 @@ namespace SeleniumDemo
         [Test]
         public void ValidUsernameInvalidPassword()
         {
-            driver.FindElement(By.Id("user-name")).SendKeys("standard_user");
-            driver.FindElement(By.Id("password")).SendKeys("invalidpass");
-            driver.FindElement(By.Id("login-button")).Click();
+            Login("standard_user", "invalidpassword");
 
-            IWebElement errorMessage = WaitUntilElementIsVisible(By.CssSelector(".error-message-container.error"));
-            Assert.That(errorMessage.Text, Is.EqualTo("Epic sadface: Username and password do not match any user in this service"));
+            Assert.That(GetErrorMessage(), Is.EqualTo("Epic sadface: Username and password do not match any user in this service"));
 
             
         }
@@ -58,13 +48,9 @@ namespace SeleniumDemo
         [Test]
         public void InvalidUsernameValidPassword()
         {
-            driver.FindElement(By.Id("user-name")).SendKeys("invalidusername");
-            driver.FindElement(By.Id("password")).SendKeys("secret_sauce");
-            driver.FindElement(By.Id("login-button")).Click();
+            Login("invalidusername", "secret_sauce");
 
-            IWebElement errorMessage = WaitUntilElementIsVisible(By.CssSelector(".error-message-container.error"));
-
-            Assert.That(errorMessage.Text, Is.EqualTo("Epic sadface: Username and password do not match any user in this service"));
+            Assert.That(GetErrorMessage(), Is.EqualTo("Epic sadface: Username and password do not match any user in this service"));
 
            
         }
@@ -72,11 +58,10 @@ namespace SeleniumDemo
         [Test]
         public void EmptyUsername()
         {
-            driver.FindElement(By.Id("password")).SendKeys("secret_sauce");
-            driver.FindElement(By.Id("login-button")).Click();
+            
+            Login("", "secret_sauce");
 
-            IWebElement errorMessage = WaitUntilElementIsVisible(By.CssSelector(".error-message-container.error"));
-            Assert.That(errorMessage.Text, Is.EqualTo("Epic sadface: Username is required"));
+            Assert.That(GetErrorMessage(), Is.EqualTo("Epic sadface: Username is required"));
            
             
 
@@ -85,20 +70,41 @@ namespace SeleniumDemo
         [Test]
         public void EmptyPassword()
         {
-            driver.FindElement(By.Id("user-name")).SendKeys("standard_user");
-            driver.FindElement(By.Id("login-button")).Click();
+            
 
-            String errorMessage = driver.FindElement(By.CssSelector(".error-message-container.error")).Text;
-            Assert.That(errorMessage, Is.EqualTo("Epic sadface: Password is required"));
+            Login("standard_user", "");
+
+            Assert.That(GetErrorMessage(), Is.EqualTo("Epic sadface: Password is required"));
+
             
             
 
         }
 
+
         private IWebElement WaitUntilElementIsVisible(By locator, int timeoutInSeconds = 10)
         {
             var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(timeoutInSeconds));
             return wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(locator));
+        }
+
+        public void Login(string username, string password)
+        {
+            IWebElement usernameInput = driver.FindElement(By.Id("user-name"));
+            IWebElement passwordInput = driver.FindElement(By.Id("password"));
+            IWebElement loginButton = driver.FindElement(By.Id("login-button"));
+
+            usernameInput.SendKeys(username);
+            passwordInput.SendKeys(password);
+            loginButton.Click();
+
+
+        }
+
+        private string GetErrorMessage()
+        {
+            IWebElement errorMessage = WaitUntilElementIsVisible(By.CssSelector(".error-message-container.error"));
+            return errorMessage.Text;
         }
 
         [TearDown]
